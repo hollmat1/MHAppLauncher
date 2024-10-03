@@ -11,7 +11,7 @@
         <ListBox Name="ListBoxFiles" VerticalContentAlignment="Top" ItemsSource="{Binding FilesCollection}" Margin="0,20,0,0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
             <ListBox.ItemTemplate>
                 <DataTemplate >
-                    <StackPanel VerticalAlignment="Top" PreviewMouseDown="openFile">
+                    <StackPanel VerticalAlignment="Top" PreviewMouseDown="openFile" >
                         <Image Source="{Binding Path=ImageSource, UpdateSourceTrigger=PropertyChanged}" Cursor="Hand" Width="50" VerticalAlignment="Top"/>
                         <TextBlock Text="{Binding Path=Name}" HorizontalAlignment="Center" TextAlignment="Center" FontFamily="Arial" Width="80" TextWrapping="Wrap" Margin="0,5,0,0" />
                     </StackPanel>
@@ -19,7 +19,7 @@
             </ListBox.ItemTemplate>
             <ListBox.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <WrapPanel Margin="20,20,20,20" IsItemsHost="True" Orientation="Horizontal"  />
+                    <WrapPanel Margin="20,20,20,20" IsItemsHost="True" Orientation="Horizontal" Drop="File_Drop" AllowDrop="true"  />
                 </ItemsPanelTemplate>
             </ListBox.ItemsPanel>
         </ListBox>

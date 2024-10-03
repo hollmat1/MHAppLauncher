@@ -111,5 +111,24 @@ namespace AppLauncher
         {
             Application.Current.Shutdown();
         }
+
+        private void File_Drop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+
+                foreach (var f in files)
+                {
+                    if (!f.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase)) 
+                    {
+                        return;
+                    }
+
+                    var fi = new FileInfo(f);
+                    File.Copy(f, Path.Combine(_folderPath, fi.Name), true);
+                }
+            }
+        }
     }
 }
