@@ -12,7 +12,13 @@
             <ListBox.ItemTemplate>
                 <DataTemplate >
                     <StackPanel VerticalAlignment="Top" PreviewMouseDown="openFile" >
-                        <Image Source="{Binding Path=ImageSource, UpdateSourceTrigger=PropertyChanged}" Cursor="Hand" Width="50" VerticalAlignment="Top"/>
+                        <StackPanel.ContextMenu>
+                            <ContextMenu>
+                            <MenuItem Command="Delete" Header="Delete">
+                            </MenuItem>
+                            </ContextMenu>
+                        </StackPanel.ContextMenu>
+                        <Image Source="{Binding Path=ImageSource, UpdateSourceTrigger=PropertyChanged}" Cursor="Hand" Width="50" VerticalAlignment="Top" />
                         <TextBlock Text="{Binding Path=Name}" HorizontalAlignment="Center" TextAlignment="Center" FontFamily="Arial" Width="80" TextWrapping="Wrap" Margin="0,5,0,0" />
                     </StackPanel>
                 </DataTemplate>

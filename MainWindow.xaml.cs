@@ -122,7 +122,7 @@ namespace AppLauncher
                 {
                     if (!f.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase)) 
                     {
-                        return;
+                        continue;
                     }
 
                     var fi = new FileInfo(f);
