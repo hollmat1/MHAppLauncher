@@ -54,7 +54,7 @@ namespace AppLauncher
                 }
                 else
                 {
-                    _folderPath = ConfigurationSettings.AppSettings["Folder"];
+                    _folderPath = ConfigurationManager.AppSettings["Folder"];
                     EnumerateFiles();
                 }
             }
