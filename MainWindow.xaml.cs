@@ -17,6 +17,7 @@ using System.Configuration;
 using System.Windows.Controls;
 using AppLauncher.FileHelpers;
 using System.Collections.Specialized;
+using System.Runtime.InteropServices;
 
 namespace AppLauncher
 {
@@ -379,6 +380,47 @@ namespace AppLauncher
                 MessageBox.Show($"An error occurred opening explorer.  {ex.Message}", "Error opening application", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
             }
 
+        }
+
+        private void TopMenu_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                ProcessStartInfo s = new ProcessStartInfo(@"klist.exe");
+                s.Arguments = "tickets"; 
+                s.RedirectStandardOutput = true;
+                s.RedirectStandardError = true;
+                s.UseShellExecute = false;
+                s.CreateNoWindow = true;
+                s.LoadUserProfile = false;
+
+                Process process = new Process();
+                process.StartInfo = s;
+
+                // Start the process
+                process.Start();
+
+                // Read the output
+                string output = process.StandardOutput.ReadToEnd();
+                process.WaitForExit();
+
+                String assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
+                String assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+
+                if(output.Length > 200)
+                    output = output.Substring(0, 200);
+
+                MessageBox.Show($"Name:{assemblyName}, Version:{assemblyVersion}" +
+                    Environment.NewLine + Environment.NewLine +
+                    $"Current Login Session: {Environment.NewLine  + output}" 
+                    , "Logon Session Data", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error getting session data.  {ex.Message}"
+                    , "Logon Session Data", MessageBoxButton.OK, MessageBoxImage.Error);
+
+            }
         }
     }
 }

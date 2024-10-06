@@ -16,9 +16,14 @@ $ShortcutName="App Launcher.lnk"
 
 if($Scope -eq "Machine") {
     $InstallPath="C:\Program Files\$FolderName\"
+    $ShortcutPath="$([Environment]::GetFolderPath("CommonStartMenu"))\Programs\$FolderName"
+    if(-not (Test-Path $ShortcutPath)) {
+        [void](mkdir $ShortcutPath)
+    }
 }
 else {
     $InstallPath="$($env:USERPROFILE)\AppData\Local\Microsoft\WindowsApps\$FolderName\"
+    $ShortcutPath=[Environment]::GetFolderPath("Desktop")
 }
 
 if(-not [string]::isnullorempty($WrapperCmd)) {
@@ -29,11 +34,10 @@ else {
    $Target="$($InstallPath)$AppLauncherCmd"
 }
 
-Write-Host "Creating Shortcut to $InstallPath (Scope = $Scope)"
+Write-Host "Creating Shortcut in $ShortcutPath to $InstallPath (Scope = $Scope)"
 
 $ws = New-Object -ComObject WScript.Shell; 
-$desktopPath = [Environment]::GetFolderPath("Desktop")
-$s = $ws.CreateShortcut("$desktopPath\$ShortcutName")
+$s = $ws.CreateShortcut("$ShortcutPath\$ShortcutName")
 $s.TargetPath = $Target 
 $s.Arguments = $Arguments
 $s.Save()
