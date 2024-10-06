@@ -1,7 +1,7 @@
 ﻿
 param(
     [ValidateSet("CurrentUser", "Machine")]
-    $Scope = "Machine",
+    $Scope = "CurrentUser",
 
     $SourcePath = "$PSScriptRoot\..\bin\x64\Release"
 )
@@ -15,3 +15,19 @@ else {
 
 Write-Host "Copying $SourcePath  to $InstallPath (Scope = $Scope)"
 copy $SourcePath\*.* $InstallPath -Force -Recurse
+
+$InstallPath = $InstallPath.TrimEnd("\")
+
+if($Scope -eq "Machine") {
+    $path = [environment]::GetEnvironmentVariable("path", "Machine")
+    if(-not $path.Contains($InstallPath) ) {
+        [environment]::SetEnvironmentVariable("path", "$path;$($InstallPath)", "Machine")
+    }
+}
+else {
+    $path = [environment]::GetEnvironmentVariable("path", "User")
+    if(-not $path.Contains($InstallPath) ) {
+        [environment]::SetEnvironmentVariable("path", "$path;$($InstallPath.TrimEnd("\"))", "User")
+    }
+
+}
