@@ -5,10 +5,17 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AppLauncher"
         mc:Ignorable="d"
-        Title="PromptNameDialog" Height="100" Width="200">
-    <StackPanel>
-        <TextBlock Text="Enter a name for this Shortcut:" />
-        <TextBox x:Name="ResponseTextBox" />
-        <Button Content="OK" Click="OKButton_Click" />
-    </StackPanel>
+        Title="" Height="150" Width="300" ResizeMode="NoResize" HorizontalAlignment="Center" VerticalAlignment="Center" WindowStartupLocation="CenterOwner">
+    <Grid>
+        <DockPanel>
+            <StackPanel VerticalAlignment="Top" DockPanel.Dock="Top">
+                <TextBlock Text="Enter a name for this Shortcut:" Margin="10" />
+                <TextBox x:Name="NameTextBox" Margin="10"  TabIndex="0" />
+            </StackPanel>
+            <WrapPanel HorizontalAlignment="Right" DockPanel.Dock="Bottom" Width="120" Height="20">
+                <Button x:Name="btnCancel" IsCancel="true" Click="HandleEsc" Height="18" Width="48" Content="Cancel" FontSize="9" HorizontalAlignment="Right"/>
+                <Button Content="OK" Click="OKButton_Click" Width="50" Margin="10,0,0,0" HorizontalAlignment="Right" IsDefault="True"/>
+            </WrapPanel>
+        </DockPanel>
+    </Grid>
 </Window>

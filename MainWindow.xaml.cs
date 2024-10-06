@@ -11,13 +11,11 @@ using System.Reflection;
 using System.Threading;
 using System.Windows;
 using System.Windows.Input;
-using AppLauncher;
 using AppLauncher.ShellClasses;
 using static AppLauncher.NativeMethods;
 using System.Configuration;
 using System.Windows.Controls;
 using AppLauncher.FileHelpers;
-using System.Collections;
 using System.Collections.Specialized;
 
 namespace AppLauncher
@@ -29,7 +27,12 @@ namespace AppLauncher
 
         public MainWindow()
         {
+
             String assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
+            String assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+
+            this.Title = $"App Launcher v{assemblyVersion}";
+
 
             using (Mutex mutex = new Mutex(false, assemblyName))
             {
@@ -83,7 +86,7 @@ namespace AppLauncher
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"An error occurred deleting file.  {ex.Message}", "Application Error", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.Yes);
+                        MessageBox.Show($"An error occurred deleting file.  {ex.Message}", "Application Error", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
                     }
 
                 }
@@ -125,14 +128,25 @@ namespace AppLauncher
             }
         }
 
-        public void openFile(object sender, MouseButtonEventArgs e)
+        public void OpenApp(object sender, MouseButtonEventArgs e)
         {
             if (e.ClickCount >= 2)
             {
                 foreach (object o in ListBoxFiles.SelectedItems)
-                    Process.Start((o as FileSystemObjectInfo).FilePath);
+                {
+                    var f = o as FileSystemObjectInfo;
+                    try
+                    {
+                        Process.Start(f.FilePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"An error occurred opening application {f.Name}.  {ex.Message}", "Error opening application", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+                    }
+                }
             }
         }
+
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
@@ -153,16 +167,17 @@ namespace AppLauncher
                     if (!f.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase)) 
                     {
                         var dialog = new PromptNameDialog();
+                        dialog.Owner = this;
                         if (dialog.ShowDialog() == true)
                         {
-                            var Name = dialog.ResponseText;
+                            var Name = dialog.NameText;
                             var Parent = Directory.GetParent(fi.FullName).FullName;
 
                             var newSCPath = Path.Combine(_folderPath, $"{Name}.lnk");
 
                             if ((File.Exists(newSCPath)))
                             {
-                                MessageBoxResult result = MessageBox.Show($"Shortcut already exists?  Overwrite", "Overwrite existing shortcut?", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+                                MessageBoxResult result = MessageBox.Show($"Shortcut already exists?  Overwrite", "Overwrite existing shortcut?", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes);
 
                                 if (result == MessageBoxResult.Yes)
                                 {
@@ -186,7 +201,7 @@ namespace AppLauncher
 
                     if ((File.Exists(newPath)))
                     {
-                        MessageBoxResult result = MessageBox.Show($"Shortcut already exists?  Overwrite", "Overwrite existing shortcut?", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+                        MessageBoxResult result = MessageBox.Show($"Shortcut already exists?  Overwrite", "Overwrite existing shortcut?", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes);
 
                         if(result == MessageBoxResult.Yes)
                             File.Copy(f, Path.Combine(_folderPath, fi.Name), true);
@@ -202,8 +217,6 @@ namespace AppLauncher
 
         private void MenuItemDelete_Click(object sender, RoutedEventArgs e)
         {
-            string caption = "Deletion";
-
             MenuItem mi = sender as MenuItem;
             if (mi != null)
             {
@@ -211,37 +224,13 @@ namespace AppLauncher
                 if (cm.DataContext is FileSystemObjectInfo)
                 {
                     var theFile = (FileSystemObjectInfo)cm.DataContext;
-
-                    MessageBoxResult result = MessageBox.Show($"Are you sure you want to delete {theFile.Name}?", caption, MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
-
-                    if (result == MessageBoxResult.No)
-                        return;
-
-                    try
-                    {
-                        File.Delete(theFile.FilePath);
-                        FilesCollection.Remove(theFile);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"An error occurred deleting file.  {ex.Message}", caption, MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.Yes);
-                    }
-
-                    //Grid g = cm.PlacementTarget as Grid;
-                    //if (g != null)
-                    //{
-                    //Console.WriteLine(g.Background); // Will print red
-                    //}
+                    DeleteFile(theFile);
                 }
             }
-
-
         }
 
         private void MenuItemRename_Click(object sender, RoutedEventArgs e)
         {
-            string caption = "Rename";
-
             MenuItem mi = sender as MenuItem;
             if (mi != null)
             {
@@ -249,31 +238,77 @@ namespace AppLauncher
                 if (cm.DataContext is FileSystemObjectInfo)
                 {
                     var theFile = (FileSystemObjectInfo)cm.DataContext;
+                    RenameFile(theFile);
+                }
+            }
+        }
 
-                    MessageBoxResult result = MessageBox.Show($"Are you sure you want to delete {theFile.Name}?", caption, MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+        private void DeleteFile(FileSystemObjectInfo theFile)
+        {
+            string caption = "Deletion";
+
+            if (theFile == null)
+                return;
+
+            MessageBoxResult result = MessageBox.Show($"Are you sure you want to delete {theFile.Name}?", caption, MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes);
+
+            if (result == MessageBoxResult.No)
+                return;
+
+            try
+            {
+                File.Delete(theFile.FilePath);
+                FilesCollection.Remove(theFile);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred deleting file.  {ex.Message}", caption, MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+            }
+
+        }
+
+        private void RenameFile(FileSystemObjectInfo theFile)
+        {
+            if (theFile == null)
+                return;
+
+            string caption = "Rename";
+            var dialog = new PromptNameDialog();
+            dialog.Owner = this;
+            if (dialog.ShowDialog() == true)
+            {
+                try
+                {
+                    var newSCPath = Path.Combine(_folderPath, $"{dialog.NameText}.lnk");
+                    MessageBoxResult result;
+
+                    if (File.Exists(newSCPath))
+                    {
+                        result = MessageBox.Show($"Shortcut with name {newSCPath} already exists.  Overwrite?", caption, MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes);
+
+                        if (result == MessageBoxResult.Yes)
+                        {
+                            File.Delete(newSCPath);
+                        }
+                    }
+                    else
+                    {
+                        result = MessageBox.Show($"Are you sure you want to rename {theFile.Name}?", caption, MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes);
+                    }
 
                     if (result == MessageBoxResult.No)
                         return;
 
-                    try
-                    {
-                        File.Delete(theFile.FilePath);
-                        FilesCollection.Remove(theFile);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"An error occurred deleting file.  {ex.Message}", caption, MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.Yes);
-                    }
+                    File.Move(theFile.FilePath, newSCPath);
+                    FilesCollection.Remove(theFile);
+                    FilesCollection.Add(new FileSystemObjectInfo(new FileInfo(newSCPath)));
 
-                    //Grid g = cm.PlacementTarget as Grid;
-                    //if (g != null)
-                    //{
-                    //Console.WriteLine(g.Background); // Will print red
-                    //}
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"An error occurred renaming file.  {ex.Message}", caption, MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
                 }
             }
-
-
         }
 
         private void Window_DragEnter(object sender, DragEventArgs e)
@@ -294,6 +329,42 @@ namespace AppLauncher
                 e.Effects = DragDropEffects.None;
 
             e.Handled = true;
+        }
+
+        private void Image_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Delete)
+            {
+                ListBox lb = sender as ListBox;
+
+                if (lb == null)
+                {
+                    e.Handled = true;
+                    return;
+                }
+
+                DeleteFile(lb.SelectedItem as FileSystemObjectInfo);
+
+                e.Handled = true;
+
+            }
+
+            if (e.Key == Key.F2)
+            {
+                ListBox lb = sender as ListBox;
+
+                if (lb == null)
+                {
+                    e.Handled = true;
+                    return;
+                }
+
+                RenameFile(lb.SelectedItem as FileSystemObjectInfo);
+
+                e.Handled = true;
+
+            }
+
         }
     }
 }

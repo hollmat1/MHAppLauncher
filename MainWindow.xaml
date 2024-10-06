@@ -8,30 +8,30 @@
         AllowDrop="True"
         Drop="File_Drop"
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
-        Title="App Launcher" ShowInTaskbar="True" Height="600" Width="800" >
+        ShowInTaskbar="True" Height="600" Width="800" WindowStartupLocation="CenterScreen">
     <Grid HorizontalAlignment="Stretch">
-        <ListBox Name="ListBoxFiles" VerticalContentAlignment="Top" ItemsSource="{Binding FilesCollection}" Margin="0,50,0,0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AllowDrop="True"   >
+        <ListBox Name="ListBoxFiles" VerticalContentAlignment="Top" ItemsSource="{Binding FilesCollection}" Margin="0,50,0,0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AllowDrop="True" KeyDown="Image_KeyDown" >
             <ListBox.ItemTemplate>
                 <DataTemplate >
-                    <StackPanel VerticalAlignment="Top" PreviewMouseDown="openFile" >
+                    <StackPanel VerticalAlignment="Top" PreviewMouseDown="OpenApp">
                         <StackPanel.ContextMenu>
                             <ContextMenu>
                                 <MenuItem CommandParameter="{Binding RelativeSource={RelativeSource Self}, Path=Parent}"  Header="Delete" IsEnabled="True" Click="MenuItemDelete_Click" />
                                 <MenuItem CommandParameter="{Binding RelativeSource={RelativeSource Self}, Path=Parent}"  Header="Rename" IsEnabled="True" Click="MenuItemRename_Click" />
                             </ContextMenu>
                         </StackPanel.ContextMenu>
-                        <Image Source="{Binding Path=ImageSource, UpdateSourceTrigger=PropertyChanged}" Cursor="Hand" Width="50" VerticalAlignment="Top" />
-                        <TextBlock Text="{Binding Path=Name}" HorizontalAlignment="Center" TextAlignment="Center" FontFamily="Arial" Width="80" TextWrapping="Wrap" Margin="0,5,0,0" />
+                        <Image Source="{Binding Path=ImageSource, UpdateSourceTrigger=PropertyChanged}" Cursor="Hand" Width="50" VerticalAlignment="Top"  />
+                        <TextBlock Text="{Binding Path=Name}" HorizontalAlignment="Center" TextAlignment="Center" FontFamily="Arial" Width="80" TextWrapping="Wrap" Margin="0,5,0,0"  />
                     </StackPanel>
                 </DataTemplate>
             </ListBox.ItemTemplate>
             <ListBox.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <WrapPanel Margin="20,20,20,20" IsItemsHost="True" Orientation="Horizontal" AllowDrop="true"  />
+                    <WrapPanel Margin="20,20,20,20" IsItemsHost="True" Orientation="Horizontal" AllowDrop="true" />
                 </ItemsPanelTemplate>
             </ListBox.ItemsPanel>
         </ListBox>
-        <TextBlock HorizontalAlignment="Left" Margin="10,15,0,0" TextWrapping="Wrap" Text="Drag Application Shortcuts from your existing Desktop into the space below.  Double-Click to launch the application." FontSize="14" VerticalAlignment="Top"/>
+        <TextBlock HorizontalAlignment="Left" Margin="10,15,0,0" TextWrapping="Wrap" Text="Drag applications or shortcuts into the space below.  Double-Click to launch." FontSize="14" VerticalAlignment="Top"/>
     </Grid>
 
 </Window>
