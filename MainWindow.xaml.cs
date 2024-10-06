@@ -367,5 +367,18 @@ namespace AppLauncher
             }
 
         }
+
+        private void OpenInExplorer_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Process.Start(_folderPath);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred opening explorer.  {ex.Message}", "Error opening application", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+            }
+
+        }
     }
 }
