@@ -3,24 +3,30 @@ param(
     [ValidateSet("CurrentUser", "Machine")]
     $Scope = "Machine",
 
-    [Switch]
-    $useWrapper = $true
+    [String]
+    $WrapperCmd,
+
+    [String]
+    $AppLauncherCmd = "AppLauncher.exe"
+
 )
 
+$FolderName="AppLauncher"
+$ShortcutName="App Launcher.lnk"
 
 if($Scope -eq "Machine") {
-    $InstallPath="C:\Program Files\AppLauncher\"
+    $InstallPath="C:\Program Files\$FolderName\"
 }
 else {
-    $InstallPath="$($env:USERPROFILE)\AppData\Local\Microsoft\WindowsApps\"
+    $InstallPath="$($env:USERPROFILE)\AppData\Local\Microsoft\WindowsApps\$FolderName\"
 }
-$ShortcutName="App Launcher.lnk"
-if($useWrapper) {
-    $Target="$($InstallPath)runas.exe"
-    $Arguments="-c $($InstallPath)AppLauncher.exe"
+
+if(-not [string]::isnullorempty($WrapperCmd)) {
+    $Target="$($InstallPath)$WrapperCmd"
+    $Arguments="-c $($InstallPath)$AppLauncherCmd"
 }
 else {
-   $Target="$($InstallPath)AppLauncher.exe"
+   $Target="$($InstallPath)$AppLauncherCmd"
 }
 
 Write-Host "Creating Shortcut to $InstallPath (Scope = $Scope)"

@@ -11,7 +11,7 @@ namespace AppLauncher.FileHelpers
 {
     internal class ShortCutHelper
     {
-        internal static void CreateShortcut(string Description, string Target, string ShortcutPath, string ShortcutName )
+        internal static void CreateShortcut(string Description, string Target, string ShortcutPath, string ShortcutName, string Arguments = null)
         {
             IShellLink link = (IShellLink)new ShellLink();
 
@@ -21,9 +21,18 @@ namespace AppLauncher.FileHelpers
                 
             }
 
+            if(Target.ToLower().Contains("[/args]"))
+            {
+                Arguments = Target.Substring(Target.IndexOf("[/args]") +7);
+                Target = Target.Substring(0, Target.IndexOf("[/args]")).Trim();
+            }
+
             link.SetDescription(Description);
             link.SetPath(Target);
-
+            if (!string.IsNullOrEmpty(Arguments))
+            {
+                link.SetArguments(Arguments);
+            }
             IPersistFile file = (IPersistFile)link;
             file.Save(Path.Combine(ShortcutPath, ShortcutName), false);
         }

@@ -69,15 +69,15 @@ namespace AppLauncher
                         if (!Directory.Exists(_folderPath))
                         {
                             Directory.CreateDirectory(_folderPath);
+                        }
 
-                            var defaultShortcuts = (NameValueCollection)ConfigurationManager.GetSection("DefaultShortcuts");
+                        var defaultShortcuts = (NameValueCollection)ConfigurationManager.GetSection("DefaultShortcuts");
 
-                            if (defaultShortcuts != null)
+                        if (defaultShortcuts != null)
+                        {
+                            foreach (var shortcutKey in defaultShortcuts.AllKeys)
                             {
-                                foreach (var shortcutKey in defaultShortcuts.AllKeys)
-                                {
-                                    ShortCutHelper.CreateShortcut(shortcutKey, defaultShortcuts[shortcutKey], _folderPath, $"{shortcutKey}.lnk");
-                                }
+                                ShortCutHelper.CreateShortcut(shortcutKey, defaultShortcuts[shortcutKey], _folderPath, $"{shortcutKey}.lnk");
                             }
                         }
 
@@ -132,17 +132,18 @@ namespace AppLauncher
         {
             if (e.ClickCount >= 2)
             {
-                foreach (object o in ListBoxFiles.SelectedItems)
+                var f = ListBoxFiles.SelectedItem as FileSystemObjectInfo;
+
+                if (f == null)
+                    return;
+                
+                try
                 {
-                    var f = o as FileSystemObjectInfo;
-                    try
-                    {
-                        Process.Start(f.FilePath);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"An error occurred opening application {f.Name}.  {ex.Message}", "Error opening application", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
-                    }
+                    Process.Start(f.FilePath);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"An error occurred opening application {f.Name}.  {ex.Message}", "Error opening application", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
                 }
             }
         }
