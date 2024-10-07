@@ -10,7 +10,7 @@ c:\users\matty\source\repos\mhapplauncher\mainwindow.xaml.cs
         AllowDrop="True"
         Drop="File_Drop"
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
-        ShowInTaskbar="True" Height="600" Width="800" WindowStartupLocation="CenterScreen">
+        ShowInTaskbar="True" Height="600" Width="800" WindowStartupLocation="CenterScreen" KeyDown="Window_KeyDown">
     <Grid HorizontalAlignment="Stretch" Margin="0,0,10,10">
         <StackPanel>
             <Menu Name="TopMenu" HorizontalAlignment="Right" Height="20" Margin="0,0,0,0">

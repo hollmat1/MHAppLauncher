@@ -34,7 +34,6 @@ namespace AppLauncher
 
             this.Title = $"App Launcher v{assemblyVersion}";
 
-
             using (Mutex mutex = new Mutex(false, assemblyName))
             {
                 if (!mutex.WaitOne(0, false))
@@ -67,21 +66,7 @@ namespace AppLauncher
 
                     try
                     {
-                        if (!Directory.Exists(_folderPath))
-                        {
-                            Directory.CreateDirectory(_folderPath);
-                        }
-
-                        var defaultShortcuts = (NameValueCollection)ConfigurationManager.GetSection("DefaultShortcuts");
-
-                        if (defaultShortcuts != null)
-                        {
-                            foreach (var shortcutKey in defaultShortcuts.AllKeys)
-                            {
-                                ShortCutHelper.CreateShortcut(shortcutKey, defaultShortcuts[shortcutKey], _folderPath, $"{shortcutKey}.lnk");
-                            }
-                        }
-
+                        EnsureExists();
                         EnumerateFiles();
 
                     }
@@ -90,6 +75,34 @@ namespace AppLauncher
                         MessageBox.Show($"An error occurred deleting file.  {ex.Message}", "Application Error", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
                     }
 
+                }
+            }
+        }
+
+        private void EnsureExists()
+        {
+            if (!Directory.Exists(_folderPath))
+            {
+                Directory.CreateDirectory(_folderPath);
+
+                var optionalShortcuts = (NameValueCollection)ConfigurationManager.GetSection("OptionalShortcuts");
+
+                if (optionalShortcuts != null)
+                {
+                    foreach (var shortcutKey in optionalShortcuts.AllKeys)
+                    {
+                        ShortCutHelper.CreateShortcut(shortcutKey, optionalShortcuts[shortcutKey], _folderPath, $"{shortcutKey}.lnk");
+                    }
+                }
+            }
+
+            var defaultShortcuts = (NameValueCollection)ConfigurationManager.GetSection("DefaultShortcuts");
+
+            if (defaultShortcuts != null)
+            {
+                foreach (var shortcutKey in defaultShortcuts.AllKeys)
+                {
+                    ShortCutHelper.CreateShortcut(shortcutKey, defaultShortcuts[shortcutKey], _folderPath, $"{shortcutKey}.lnk");
                 }
             }
         }
@@ -116,13 +129,15 @@ namespace AppLauncher
 
         public void EnumerateFiles()
         {
+            EnsureExists();
+
             //FilesCollection = new ObservableCollection<DownloadedFile>();
             FilesCollection = new ObservableCollection<FileSystemObjectInfo>();
 
             var folder = new DirectoryInfo(_folderPath);
-            var downloadedAttachments = folder.GetFiles("*");
+            var shortcuts = folder.GetFiles("*");
 
-            foreach (var file in downloadedAttachments)
+            foreach (var file in shortcuts)
             {
                 var fileInfo = new FileSystemObjectInfo(file);
                 FilesCollection.Add(fileInfo);
@@ -148,7 +163,6 @@ namespace AppLauncher
                 }
             }
         }
-
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
@@ -420,6 +434,15 @@ namespace AppLauncher
                 MessageBox.Show($"Error getting session data.  {ex.Message}"
                     , "Logon Session Data", MessageBoxButton.OK, MessageBoxImage.Error);
 
+            }
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.F5)
+            {
+                EnumerateFiles();
+                e.Handled = true;
             }
         }
     }
