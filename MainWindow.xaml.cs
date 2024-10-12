@@ -18,17 +18,19 @@ using System.Windows.Controls;
 using AppLauncher.FileHelpers;
 using System.Collections.Specialized;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 namespace AppLauncher
 {
     public partial class MainWindow : Window
     {
         public ObservableCollection<FileSystemObjectInfo> FilesCollection { get; set; }
-        public string _folderPath;
+        private string _folderPath, _networkDrivesfilePath;
+        private bool UseFileBrowserDialogToOpenFolderShortcuts = true;
+        private NetUserDetail UserDetails = null;
 
         public MainWindow()
         {
-
             String assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
             String assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
@@ -64,6 +66,9 @@ namespace AppLauncher
                     _folderPath = ConfigurationManager.AppSettings["Folder"];
                     _folderPath = Environment.ExpandEnvironmentVariables(_folderPath);
 
+                    UseFileBrowserDialogToOpenFolderShortcuts = !string.IsNullOrEmpty(ConfigurationManager.AppSettings["UseFileBrowserDialogToOpenFolderShortcuts"]) &&
+                        ConfigurationManager.AppSettings["UseFileBrowserDialogToOpenFolderShortcuts"].Equals("true", StringComparison.OrdinalIgnoreCase);
+
                     try
                     {
                         EnsureExists();
@@ -77,6 +82,58 @@ namespace AppLauncher
 
                 }
             }
+
+            InitializeComponent();
+            SetAppLauncherEnv();
+            TryMapDrives();
+        }
+
+        private void TryMapDrives()
+        {
+            if (string.IsNullOrEmpty(ConfigurationManager.AppSettings["AutoMapperFilePath"]))
+            {
+                return;
+            }
+
+            _networkDrivesfilePath = ConfigurationManager.AppSettings["AutoMapperFilePath"];
+            _networkDrivesfilePath = Environment.ExpandEnvironmentVariables(_networkDrivesfilePath);
+
+            try
+            {
+                if(!File.Exists(_networkDrivesfilePath))
+                {
+                    return;
+                }
+
+                using(var rdr = new StreamReader(_networkDrivesfilePath))
+                {
+                    while(rdr.Peek() > -1)
+                    {
+                        var MappingLine = rdr.ReadLine();
+
+                        if(MappingLine.StartsWith(@"'"))
+                        {
+                            continue;
+                        }
+
+                        try 
+                        {
+                            var expandedDriveInfo = Environment.ExpandEnvironmentVariables(MappingLine);
+                            // todo : map network drive
+
+                        }
+                        catch
+                        {
+
+                        }
+                    }
+                }
+            }
+            catch (ApplicationException ex)
+            {
+            }
+
+
         }
 
         private void EnsureExists()
@@ -155,6 +212,36 @@ namespace AppLauncher
                 
                 try
                 {
+                    if(UseFileBrowserDialogToOpenFolderShortcuts)
+                    {
+                        var Target = ShortCutHelper.ResolveShortcutTarget(f.FilePath);
+
+                        if (ShortCutHelper.IsTargetNetworkPath(Target))
+                        {
+                            // Open File Dialog
+                            var FileBrowser = new System.Windows.Forms.OpenFileDialog
+                            {
+                                InitialDirectory = Target
+                            };
+
+                            FileBrowser.ShowDialog();
+
+                            if (!string.IsNullOrEmpty(FileBrowser.FileName))
+                            {
+                                try
+                                {
+                                    Process.Start(FileBrowser.FileName);
+                                }
+                                catch (Exception ex)
+                                {
+                                    MessageBox.Show($"An error occurred opening file {FileBrowser.FileName}.  {ex.Message}", "Error opening file", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+                                }
+                            }
+
+                            return;
+                        }
+                    }
+
                     Process.Start(f.FilePath);
                 }
                 catch (Exception ex)
@@ -396,38 +483,35 @@ namespace AppLauncher
 
         }
 
-        private void TopMenu_Click(object sender, RoutedEventArgs e)
+        private void About_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                ProcessStartInfo s = new ProcessStartInfo(@"klist.exe");
-                s.Arguments = "tickets"; 
-                s.RedirectStandardOutput = true;
-                s.RedirectStandardError = true;
-                s.UseShellExecute = false;
-                s.CreateNoWindow = true;
-                s.LoadUserProfile = false;
-
-                Process process = new Process();
-                process.StartInfo = s;
-
-                // Start the process
-                process.Start();
-
-                // Read the output
-                string output = process.StandardOutput.ReadToEnd();
-                process.WaitForExit();
-
                 String assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
                 String assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
-                if(output.Length > 200)
+                var output = GetKerberosTickets();
+
+                if (output.Length > 200)
                     output = output.Substring(0, 200);
 
-                MessageBox.Show($"Name:{assemblyName}, Version:{assemblyVersion}" +
-                    Environment.NewLine + Environment.NewLine +
-                    $"Current Login Session: {Environment.NewLine  + output}" 
-                    , "Logon Session Data", MessageBoxButton.OK, MessageBoxImage.Information);
+                if(UserDetails != null)
+                {
+                    MessageBox.Show($"Name:{assemblyName}, Version:{assemblyVersion}" +
+                         Environment.NewLine + Environment.NewLine +
+                         $"UserName: {UserDetails.Username + Environment.NewLine }" +
+                         $"UserDomain: {UserDetails.DomainDns + Environment.NewLine}" +
+                         $"Current Login Session: {Environment.NewLine + output}"
+                         , "Logon Session Data", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    MessageBox.Show($"Name:{assemblyName}, Version:{assemblyVersion}" +
+                         Environment.NewLine + Environment.NewLine +
+                         $"Current Login Session: {Environment.NewLine + output}"
+                         , "Logon Session Data", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+
             }
             catch (Exception ex)
             {
@@ -437,6 +521,30 @@ namespace AppLauncher
             }
         }
 
+
+        private string GetKerberosTickets()
+        {
+            ProcessStartInfo s = new ProcessStartInfo(@"klist.exe");
+            s.Arguments = "tickets";
+            s.RedirectStandardOutput = true;
+            s.RedirectStandardError = true;
+            s.UseShellExecute = false;
+            s.CreateNoWindow = true;
+            s.LoadUserProfile = false;
+
+            Process process = new Process();
+            process.StartInfo = s;
+
+            // Start the process
+            process.Start();
+
+            // Read the output
+            string output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
+
+            return output;
+        }
+
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.F5)
@@ -444,6 +552,72 @@ namespace AppLauncher
                 EnumerateFiles();
                 e.Handled = true;
             }
+        }
+
+        private void FileBrowser_Click(object sender, RoutedEventArgs e)
+        {
+            // Open File Dialog
+            var FileBrowser = new System.Windows.Forms.OpenFileDialog {
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+            };
+
+            FileBrowser.ShowDialog();
+
+            if(!string.IsNullOrEmpty(FileBrowser.FileName))
+            {
+                try
+                {
+                    Process.Start(FileBrowser.FileName);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"An error occurred opening file {FileBrowser.FileName}.  {ex.Message}", "Error opening file", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+                }
+            }
+
+        }
+
+        private NetUserDetail GetUserNetDetails()
+        {
+            try
+            {
+                const string UPNPatternMatch = "\\s+(?:(?<username>[^@]+)@(?<domaindns>.+))";
+                string KListOutput = GetKerberosTickets();
+
+                var Match = Regex.Match(KListOutput, UPNPatternMatch);
+
+                if (Match.Success)
+                {
+                    return new NetUserDetail
+                    {
+                        Username = Match.Groups["username"].Value.Trim(),
+                        DomainDns = Match.Groups["domaindns"].Value.Trim()
+                    };
+                }
+            }
+            catch
+            {
+
+            }
+
+            return null;
+        }
+
+        private void SetAppLauncherEnv()
+        {
+            UserDetails = GetUserNetDetails();
+
+            if (UserDetails != null)
+            {
+                Environment.SetEnvironmentVariable("CS_USERNAME", UserDetails.Username, EnvironmentVariableTarget.Process);
+                Environment.SetEnvironmentVariable("CS_USERDOMAIN", UserDetails.DomainDns, EnvironmentVariableTarget.Process);
+            }
+        }
+
+        private class NetUserDetail
+        {
+            public string Username { get; set; }
+            public string DomainDns { get; set; }
         }
     }
 }

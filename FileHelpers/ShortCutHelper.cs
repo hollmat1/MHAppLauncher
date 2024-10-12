@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace AppLauncher.FileHelpers
 {
@@ -35,6 +36,52 @@ namespace AppLauncher.FileHelpers
             }
             IPersistFile file = (IPersistFile)link;
             file.Save(Path.Combine(ShortcutPath, ShortcutName), false);
+        }
+
+        public static string ResolveShortcutTarget(string filePath)
+        {
+            dynamic shortcut;
+            dynamic windowsShell;
+
+            try
+            {
+
+                if (Path.GetExtension(filePath)?.Equals(".lnk", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    Type shellObjectType = Type.GetTypeFromProgID("WScript.Shell");
+                    windowsShell = Activator.CreateInstance(shellObjectType);
+                    shortcut = windowsShell.CreateShortcut(filePath);
+                    var path = shortcut.TargetPath;
+                    shortcut = null;
+                    windowsShell = null;
+                    return path;
+                }
+            }
+            finally
+            {
+                shortcut = null;
+                windowsShell = null;
+            }
+
+            return null;
+        }
+
+        public static bool IsTargetNetworkPath(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+                return false;
+
+            if (!string.IsNullOrEmpty(Path.GetExtension(path)))
+                return false;
+
+            if (path.StartsWith(@"//") || path.StartsWith(@"\\"))
+                return true;
+
+            var root = Path.GetPathRoot(path);
+            if (!root.Equals("C") && !root.Equals("D"))
+                return true;
+
+            return false;
         }
 
         [ComImport]

@@ -10,11 +10,12 @@ c:\users\matty\source\repos\mhapplauncher\mainwindow.xaml.cs
         AllowDrop="True"
         Drop="File_Drop"
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
-        ShowInTaskbar="True" Height="600" Width="800" WindowStartupLocation="CenterScreen" KeyDown="Window_KeyDown">
+        ShowInTaskbar="True" Height="800" Width="1000" WindowStartupLocation="CenterScreen" KeyDown="Window_KeyDown">
     <Grid HorizontalAlignment="Stretch" Margin="0,0,10,10">
         <StackPanel>
-            <Menu Name="TopMenu" HorizontalAlignment="Right" Height="20" Margin="0,0,0,0">
-                <MenuItem Header="About" Click="TopMenu_Click" FontSize="14" />
+            <Menu Name="TopMenu" HorizontalAlignment="Right" Height="30" Margin="0,0,0,0" >
+                <MenuItem Header="File Browser.." Click="FileBrowser_Click" FontSize="14" Height="30" TextBlock.TextAlignment="Center" />
+                <MenuItem Header="About" Click="About_Click" FontSize="14" Height="30" />
             </Menu>
             <TextBlock HorizontalAlignment="Left" Margin="10,15,20,10" TextWrapping="Wrap" Text="Drag applications or shortcuts into the space below.  Double-Click to launch." FontSize="14" VerticalAlignment="Top"/>
         </StackPanel>

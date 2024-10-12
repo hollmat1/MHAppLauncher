@@ -1,21 +1,42 @@
-﻿using System;
+﻿
+function Get-Edge {
+    $p = [AppLauncher.NativeMethods]::GetProcess()
+
+    $windowHandle = $p[0].MainWindowHandle
+
+    if ([AppLauncher.NativeMethods]::IsIconic($windowHandle)) {
+        [AppLauncher.NativeMethods]::ShowWindow($windowHandle, [AppLauncher.NativeMethods.ShowWindowCommand]::Restore)
+    }
+
+    [AppLauncher.NativeMethods]::SetForegroundWindow($windowHandle);
+}
+
+$code = @"
+using System;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace AppLauncher
 {
-    internal static class NativeMethods
+    public static class NativeMethods
     {
-        [DllImport("User32.dll", CharSet = CharSet.Unicode, ExactSpelling = true, SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern Boolean IsIconic([In] IntPtr windowHandle);
+        
+        public static Process[] GetProcess(string Name = "msedge")
+        {
+            return Process.GetProcessesByName(Name);
+        }
 
         [DllImport("User32.dll", CharSet = CharSet.Unicode, ExactSpelling = true, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern Boolean SetForegroundWindow([In] IntPtr windowHandle);
+        public static extern Boolean IsIconic([In] IntPtr windowHandle);
 
         [DllImport("User32.dll", CharSet = CharSet.Unicode, ExactSpelling = true, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern Boolean ShowWindow([In] IntPtr windowHandle, [In] ShowWindowCommand command);
+        public static extern Boolean SetForegroundWindow([In] IntPtr windowHandle);
+
+        [DllImport("User32.dll", CharSet = CharSet.Unicode, ExactSpelling = true, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern Boolean ShowWindow([In] IntPtr windowHandle, [In] ShowWindowCommand command);
 
         public enum ShowWindowCommand : int
         {
@@ -33,3 +54,8 @@ namespace AppLauncher
         }
     }
 }
+"@
+
+Add-Type -Language CSharp $code
+
+Get-Edge
