@@ -104,11 +104,9 @@ namespace AppLauncher
                 {
                     if (AppLauncherAppConfig.IsOneDriveFolder(ParentPath.FullName) && !AppLauncherAppConfig.OneDriveExists)
                     {
-                        var result = MessageBox.Show($"App Launcher is using OneDrive but it does not appear to be available.  It is advised to sign-in to One Drive to access the Desktop. " + Environment.NewLine + Environment.NewLine + "Continue without signing in to OneDrive?",
-                            "Sign-in to OneDrive", MessageBoxButton.YesNo, MessageBoxImage.Error);
+                        _networkDrivesfilePath = AppLauncherAppConfig.AutoMapperFileTempPath;
 
-                        if (result == MessageBoxResult.No)
-                            return;
+                        ParentPath = Directory.GetParent(_networkDrivesfilePath);
                     }
 
                     ParentPath.Create();
@@ -157,15 +155,13 @@ namespace AppLauncher
             {
                 if (AppLauncherAppConfig.IsOneDriveFolder(_folderPath) && !AppLauncherAppConfig.OneDriveExists)
                 {
-                    var result = MessageBox.Show($"App Launcher is using OneDrive but it does not appear to be available.  It is advised to sign-in to One Drive to access the Desktop. " + Environment.NewLine + Environment.NewLine+"Continue without signing in to OneDrive?",
-                        "Sign-in to OneDrive", MessageBoxButton.YesNo, MessageBoxImage.Error);
+                    MessageBox.Show($"OneDrive is not available.  Please ensure you are Signed-in to OneDrive.  Desktop changes will not be saved!",
+                        "Sign-in to OneDrive", MessageBoxButton.OK, MessageBoxImage.Warning);
 
-                    if(result == MessageBoxResult.No)
-                        return;
+                    _folderPath = AppLauncherAppConfig.DesktopTempPath;
                 }
 
                 Directory.CreateDirectory(_folderPath);
-
                 var optionalShortcuts = (NameValueCollection)ConfigurationManager.GetSection("OptionalShortcuts");
 
                 if (optionalShortcuts != null)
@@ -210,7 +206,8 @@ namespace AppLauncher
 
         public void EnumerateFiles()
         {
-            EnsureExists();
+            if (!Directory.Exists(_folderPath))
+                return;
 
             //FilesCollection = new ObservableCollection<DownloadedFile>();
             FilesCollection = new ObservableCollection<FileSystemObjectInfo>();
@@ -282,6 +279,9 @@ namespace AppLauncher
 
         private void File_Drop(object sender, DragEventArgs e)
         {
+            if (!Directory.Exists(_folderPath))
+                return; 
+
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
                 string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);

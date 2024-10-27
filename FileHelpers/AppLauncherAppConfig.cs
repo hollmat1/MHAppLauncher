@@ -11,6 +11,7 @@ namespace AppLauncher.FileHelpers
 {
     internal static class AppLauncherAppConfig
     {
+        const string DefaultFolderName = "AppLauncher";
         const string DefaultFolder = "%OneDrive%/AppLauncher";
         const string DefaultAltFolder = "%APPDATA%/AppLauncher";
         const string DefaultDesktopRelativePath = "Desktop";
@@ -104,6 +105,22 @@ namespace AppLauncher.FileHelpers
 
                 // some env variable was not resolved, so fallback
                 return Path.Combine(AltFolder, AutoMapperRelativeFilePath);
+            }
+        }
+
+        public static string DesktopTempPath
+        {
+            get
+            {
+                return Path.Combine(Environment.ExpandEnvironmentVariables("%TEMP%"), DefaultFolderName + "/" + DesktopRelativePath);
+            }
+        }
+
+        public static string AutoMapperFileTempPath
+        {
+            get
+            {
+                return Path.Combine(Environment.ExpandEnvironmentVariables("%TEMP%"), DefaultFolderName + "/"+ AutoMapperRelativeFilePath);
             }
         }
 
