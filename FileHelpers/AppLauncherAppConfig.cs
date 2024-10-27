@@ -16,12 +16,9 @@ namespace AppLauncher.FileHelpers
         const string DefaultDesktopRelativePath = "Desktop";
         const string DefaultAutoMapperRelativeFilePath = "NetDrives/CSNetworkDrives.txt";
 
-        public static bool IsOneDriveFolder
+        public static bool IsOneDriveFolder(string Path)
         {
-            get
-            {
-                return Folder.StartsWith(OneDrivePath, StringComparison.OrdinalIgnoreCase);
-            }
+            return Path.StartsWith(OneDrivePath, StringComparison.OrdinalIgnoreCase);
         }
 
         public static string OneDrivePath
@@ -93,6 +90,7 @@ namespace AppLauncher.FileHelpers
                 if (Folder.IndexOf("%", 0) == -1)
                     return Path.Combine(Folder, DesktopRelativePath);
 
+                // some env variable was not resolved, so fallback
                 return Path.Combine(AltFolder, DesktopRelativePath);
             }
         }
@@ -104,6 +102,7 @@ namespace AppLauncher.FileHelpers
                 if (Folder.IndexOf("%", 0) == -1)
                     return Path.Combine(Folder, DesktopRelativePath);
 
+                // some env variable was not resolved, so fallback
                 return Path.Combine(AltFolder, AutoMapperRelativeFilePath);
             }
         }

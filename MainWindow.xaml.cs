@@ -102,12 +102,13 @@ namespace AppLauncher
 
                 if (!ParentPath.Exists)
                 {
-                    if (AppLauncherAppConfig.IsOneDriveFolder && !AppLauncherAppConfig.OneDriveExists)
+                    if (AppLauncherAppConfig.IsOneDriveFolder(ParentPath.FullName) && !AppLauncherAppConfig.OneDriveExists)
                     {
-                        MessageBox.Show($"App Launcher is using OneDrive but OneDrive does not appear to be available.  State will not be saved until you sign-in to OneDrive.", 
-                            "Please sign-in to OneDrive", MessageBoxButton.OK, MessageBoxImage.Error);
+                        var result = MessageBox.Show($"App Launcher is using OneDrive but it does not appear to be available.  It is advised to sign-in to One Drive to access the Desktop. " + Environment.NewLine + Environment.NewLine + "Continue without signing in to OneDrive?",
+                            "Sign-in to OneDrive", MessageBoxButton.YesNo, MessageBoxImage.Error);
 
-                        return;
+                        if (result == MessageBoxResult.No)
+                            return;
                     }
 
                     ParentPath.Create();
@@ -154,12 +155,13 @@ namespace AppLauncher
         {
             if (!Directory.Exists(_folderPath))
             {
-                if (AppLauncherAppConfig.IsOneDriveFolder && !AppLauncherAppConfig.OneDriveExists)
+                if (AppLauncherAppConfig.IsOneDriveFolder(_folderPath) && !AppLauncherAppConfig.OneDriveExists)
                 {
-                    MessageBox.Show($"App Launcher is using OneDrive but OneDrive does not appear to be available.  State will not be saved until you sign-in to OneDrive.",
-                        "Please sign-in to OneDrive", MessageBoxButton.OK, MessageBoxImage.Error);
+                    var result = MessageBox.Show($"App Launcher is using OneDrive but it does not appear to be available.  It is advised to sign-in to One Drive to access the Desktop. " + Environment.NewLine + Environment.NewLine+"Continue without signing in to OneDrive?",
+                        "Sign-in to OneDrive", MessageBoxButton.YesNo, MessageBoxImage.Error);
 
-                    return;
+                    if(result == MessageBoxResult.No)
+                        return;
                 }
 
                 Directory.CreateDirectory(_folderPath);
