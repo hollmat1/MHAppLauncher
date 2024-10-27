@@ -41,7 +41,7 @@ namespace AppLauncher.FileHelpers
         {
             get
             {
-                return !Directory.Exists(OneDrivePath);
+                return !string.IsNullOrEmpty(OneDrivePath) && !Directory.Exists(OneDrivePath);
             }
         }
 
@@ -95,12 +95,9 @@ namespace AppLauncher.FileHelpers
             }
         }
 
-        public static string AutoMapperFilePath
+        public static string GetAutoMapperFilePath(string rootFolder)
         {
-            get
-            {
-                return Path.Combine(Folder, RootFolderName, AutoMapperRelativeFilePath);
-            }
+            return Path.Combine(rootFolder, AutoMapperRelativeFilePath);
         }
 
         public static string DesktopAltPath
@@ -112,28 +109,11 @@ namespace AppLauncher.FileHelpers
             }
         }
 
-        public static string AutoMapperFileAltPath
-        {
-            get
-            {
-                // some env variable was not resolved, so fallback
-                return Path.Combine(AltFolder, RootFolderName, DesktopRelativePath);
-            }
-        }      
-
         public static string DesktopTempPath
         {
             get
             {
                 return Path.Combine(Environment.ExpandEnvironmentVariables("%TEMP%"), RootFolderName + "/" + DesktopRelativePath);
-            }
-        }
-
-        public static string AutoMapperFileTempPath
-        {
-            get
-            {
-                return Path.Combine(Environment.ExpandEnvironmentVariables("%TEMP%"), RootFolderName + "/"+ AutoMapperRelativeFilePath);
             }
         }
 

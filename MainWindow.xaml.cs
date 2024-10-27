@@ -25,7 +25,7 @@ namespace AppLauncher
     public partial class MainWindow : Window
     {
         public ObservableCollection<FileSystemObjectInfo> FilesCollection { get; set; }
-        private string _folderPath, _networkDrivesfilePath;
+        private string _desktopFolderPath, _networkDrivesfilePath;
         private bool UseFileBrowserDialogToOpenFolderShortcuts = true;
         private NetUserDetail UserDetails = null;
 
@@ -61,40 +61,33 @@ namespace AppLauncher
                     //if (!shownProcess)
                         //MessageBox.Show(String.Format(CultureInfo.CurrentCulture, "An instance of {0} is already running!", assemblyName), assemblyName, MessageBoxButtons.OK, MessageBoxIcon.Asterisk, MessageBoxDefaultButton.Button1, (MessageBoxOptions)0);
                 }
-                else
-                {
-                    _folderPath = AppLauncherAppConfig.DesktopPath;
-
-                    UseFileBrowserDialogToOpenFolderShortcuts = !string.IsNullOrEmpty(ConfigurationManager.AppSettings["UseFileBrowserDialogToOpenFolderShortcuts"]) &&
-                        ConfigurationManager.AppSettings["UseFileBrowserDialogToOpenFolderShortcuts"].Equals("true", StringComparison.OrdinalIgnoreCase);
-
-                    try
-                    {
-                        EnsureExists();
-                        EnumerateFiles();
-
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"An error occurred deleting file.  {ex.Message}", "Application Error", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
-                    }
-
-                }
             }
 
-            InitializeComponent();
-            SetAppLauncherEnv();
-            TryMapDrives();
+            try
+            {
+                _desktopFolderPath = AppLauncherAppConfig.DesktopPath;
+
+                UseFileBrowserDialogToOpenFolderShortcuts = !string.IsNullOrEmpty(ConfigurationManager.AppSettings["UseFileBrowserDialogToOpenFolderShortcuts"]) &&
+                    ConfigurationManager.AppSettings["UseFileBrowserDialogToOpenFolderShortcuts"].Equals("true", StringComparison.OrdinalIgnoreCase);
+
+                EnsureExists();
+                EnumerateFiles();
+                InitializeComponent();
+                SetAppLauncherEnv();
+                TryMapDrives();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred loading app.  {ex.Message}", "Application Error", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+            }
         }
 
         private void TryMapDrives()
         {
-            if (string.IsNullOrEmpty(ConfigurationManager.AppSettings["AutoMapperFilePath"]))
-            {
-                return;
-            }
 
-            _networkDrivesfilePath = AppLauncherAppConfig.AutoMapperFilePath;
+            var rootPath = Directory.GetParent(_desktopFolderPath);
+
+            _networkDrivesfilePath = AppLauncherAppConfig.GetAutoMapperFilePath(rootPath.FullName);
 
             try
             {
@@ -102,13 +95,6 @@ namespace AppLauncher
 
                 if (!ParentPath.Exists)
                 {
-                    if (AppLauncherAppConfig.IsOneDriveFolder(ParentPath.FullName) && !AppLauncherAppConfig.OneDriveExists)
-                    {
-                        _networkDrivesfilePath = AppLauncherAppConfig.AutoMapperFileAltPath;
-
-                        ParentPath = Directory.GetParent(_networkDrivesfilePath);
-                    }
-
                     ParentPath.Create();
                 }
 
@@ -151,35 +137,49 @@ namespace AppLauncher
 
         private void EnsureExists()
         {
-            if (!Directory.Exists(_folderPath))
+            try
             {
-                if (AppLauncherAppConfig.IsOneDriveFolder(_folderPath) && !AppLauncherAppConfig.OneDriveExists)
+                if (!Directory.Exists(_desktopFolderPath))
                 {
-                    //MessageBox.Show($"OneDrive is not available.  Please ensure you are Signed-in to OneDrive.  Desktop changes will not be saved!",
-                    //    "Sign-in to OneDrive", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    if (AppLauncherAppConfig.IsOneDriveFolder(_desktopFolderPath) && !AppLauncherAppConfig.OneDriveExists)
+                    {
+                        //MessageBox.Show($"OneDrive is not available.  Please ensure you are Signed-in to OneDrive.  Desktop changes will not be saved!",
+                        //    "Sign-in to OneDrive", MessageBoxButton.OK, MessageBoxImage.Warning);
 
-                    _folderPath = AppLauncherAppConfig.DesktopAltPath;
+                        _desktopFolderPath = AppLauncherAppConfig.DesktopAltPath;
+                    }
+
+                    Directory.CreateDirectory(_desktopFolderPath);
+                    var optionalShortcuts = (NameValueCollection)ConfigurationManager.GetSection("OptionalShortcuts");
+
+                    if (optionalShortcuts != null)
+                    {
+                        foreach (var shortcutKey in optionalShortcuts.AllKeys)
+                        {
+                            ShortCutHelper.CreateShortcut(shortcutKey, optionalShortcuts[shortcutKey], _desktopFolderPath, $"{shortcutKey}.lnk");
+                        }
+                    }
                 }
 
-                Directory.CreateDirectory(_folderPath);
-                var optionalShortcuts = (NameValueCollection)ConfigurationManager.GetSection("OptionalShortcuts");
+                var defaultShortcuts = (NameValueCollection)ConfigurationManager.GetSection("DefaultShortcuts");
 
-                if (optionalShortcuts != null)
+                if (defaultShortcuts != null)
                 {
-                    foreach (var shortcutKey in optionalShortcuts.AllKeys)
+                    foreach (var shortcutKey in defaultShortcuts.AllKeys)
                     {
-                        ShortCutHelper.CreateShortcut(shortcutKey, optionalShortcuts[shortcutKey], _folderPath, $"{shortcutKey}.lnk");
+                        ShortCutHelper.CreateShortcut(shortcutKey, defaultShortcuts[shortcutKey], _desktopFolderPath, $"{shortcutKey}.lnk");
                     }
                 }
             }
-
-            var defaultShortcuts = (NameValueCollection)ConfigurationManager.GetSection("DefaultShortcuts");
-
-            if (defaultShortcuts != null)
+            catch (Exception ex) 
             {
-                foreach (var shortcutKey in defaultShortcuts.AllKeys)
+                MessageBox.Show($"An error occurred creating Desktop Folder {_desktopFolderPath}. {Environment.NewLine}{Environment.NewLine} {ex.Message}", "Error opening application", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+
+                // last ditch attempt
+                if (!_desktopFolderPath.Equals(AppLauncherAppConfig.DesktopTempPath, StringComparison.OrdinalIgnoreCase))
                 {
-                    ShortCutHelper.CreateShortcut(shortcutKey, defaultShortcuts[shortcutKey], _folderPath, $"{shortcutKey}.lnk");
+                    _desktopFolderPath = AppLauncherAppConfig.DesktopTempPath;
+                    EnsureExists();
                 }
             }
         }
@@ -206,13 +206,12 @@ namespace AppLauncher
 
         public void EnumerateFiles()
         {
-            if (!Directory.Exists(_folderPath))
-                return;
+            EnsureExists();
 
             //FilesCollection = new ObservableCollection<DownloadedFile>();
             FilesCollection = new ObservableCollection<FileSystemObjectInfo>();
 
-            var folder = new DirectoryInfo(_folderPath);
+            var folder = new DirectoryInfo(_desktopFolderPath);
             var shortcuts = folder.GetFiles("*");
 
             foreach (var file in shortcuts)
@@ -272,14 +271,9 @@ namespace AppLauncher
             }
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            Application.Current.Shutdown();
-        }
-
         private void File_Drop(object sender, DragEventArgs e)
         {
-            if (!Directory.Exists(_folderPath))
+            if (!Directory.Exists(_desktopFolderPath))
                 return; 
 
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -300,7 +294,7 @@ namespace AppLauncher
                             var Name = dialog.NameText;
                             var Parent = Directory.GetParent(fi.FullName).FullName;
 
-                            var newSCPath = Path.Combine(_folderPath, $"{Name}.lnk");
+                            var newSCPath = Path.Combine(_desktopFolderPath, $"{Name}.lnk");
 
                             if ((File.Exists(newSCPath)))
                             {
@@ -309,12 +303,12 @@ namespace AppLauncher
                                 if (result == MessageBoxResult.Yes)
                                 {
                                     File.Delete(newSCPath);
-                                    ShortCutHelper.CreateShortcut(Name, fi.FullName, _folderPath, $"{Name}.lnk");
+                                    ShortCutHelper.CreateShortcut(Name, fi.FullName, _desktopFolderPath, $"{Name}.lnk");
                                 }
                             }
                             else
                             {
-                                ShortCutHelper.CreateShortcut(Name, fi.FullName, _folderPath, $"{Name}.lnk");
+                                ShortCutHelper.CreateShortcut(Name, fi.FullName, _desktopFolderPath, $"{Name}.lnk");
 
                                 FilesCollection.Add(new FileSystemObjectInfo(new FileInfo(newSCPath)));
                             }
@@ -324,18 +318,18 @@ namespace AppLauncher
                         continue;
                     }
 
-                    var newPath = Path.Combine(_folderPath, fi.Name);
+                    var newPath = Path.Combine(_desktopFolderPath, fi.Name);
 
                     if ((File.Exists(newPath)))
                     {
                         MessageBoxResult result = MessageBox.Show($"Shortcut already exists?  Overwrite", "Overwrite existing shortcut?", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes);
 
                         if(result == MessageBoxResult.Yes)
-                            File.Copy(f, Path.Combine(_folderPath, fi.Name), true);
+                            File.Copy(f, Path.Combine(_desktopFolderPath, fi.Name), true);
                     }
                     else
                     {
-                        File.Copy(f, Path.Combine(_folderPath, fi.Name), true);
+                        File.Copy(f, Path.Combine(_desktopFolderPath, fi.Name), true);
                         FilesCollection.Add(new FileSystemObjectInfo(new FileInfo(newPath)));
                     }
                 }
@@ -406,7 +400,7 @@ namespace AppLauncher
             {
                 try
                 {
-                    var newSCPath = Path.Combine(_folderPath, $"{dialog.NameText}.lnk");
+                    var newSCPath = Path.Combine(_desktopFolderPath, $"{dialog.NameText}.lnk");
                     MessageBoxResult result;
 
                     if (File.Exists(newSCPath))
@@ -498,7 +492,7 @@ namespace AppLauncher
         {
             try
             {
-                Process.Start(_folderPath);
+                Process.Start(_desktopFolderPath);
             }
             catch (Exception ex)
             {
