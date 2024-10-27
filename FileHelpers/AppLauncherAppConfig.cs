@@ -11,9 +11,9 @@ namespace AppLauncher.FileHelpers
 {
     internal static class AppLauncherAppConfig
     {
-        const string DefaultFolderName = "AppLauncher";
-        const string DefaultFolder = "%OneDrive%/AppLauncher";
-        const string DefaultAltFolder = "%APPDATA%/AppLauncher";
+        const string RootFolderName = "AppLauncher";
+        const string DefaultFolder = "%OneDrive%";
+        const string DefaultAltFolder = "%APPDATA%";
         const string DefaultDesktopRelativePath = "Desktop";
         const string DefaultAutoMapperRelativeFilePath = "NetDrives/CSNetworkDrives.txt";
 
@@ -41,12 +41,14 @@ namespace AppLauncher.FileHelpers
         {
             get
             {
-                return Directory.Exists(OneDrivePath);
+                return !Directory.Exists(OneDrivePath);
             }
         }
 
-        public static string Folder {
-            get {
+        public static string Folder 
+        {
+            get 
+            {
                 var path = string.IsNullOrEmpty(ConfigurationManager.AppSettings["Folder"]) ?
                     DefaultFolder : ConfigurationManager.AppSettings["Folder"];
 
@@ -88,11 +90,8 @@ namespace AppLauncher.FileHelpers
         { 
             get
             {
-                if (Folder.IndexOf("%", 0) == -1)
-                    return Path.Combine(Folder, DesktopRelativePath);
-
                 // some env variable was not resolved, so fallback
-                return Path.Combine(AltFolder, DesktopRelativePath);
+                return Path.Combine(Folder, RootFolderName, DesktopRelativePath);
             }
         }
 
@@ -100,19 +99,33 @@ namespace AppLauncher.FileHelpers
         {
             get
             {
-                if (Folder.IndexOf("%", 0) == -1)
-                    return Path.Combine(Folder, DesktopRelativePath);
-
-                // some env variable was not resolved, so fallback
-                return Path.Combine(AltFolder, AutoMapperRelativeFilePath);
+                return Path.Combine(Folder, RootFolderName, AutoMapperRelativeFilePath);
             }
         }
+
+        public static string DesktopAltPath
+        {
+            get
+            {
+                // some env variable was not resolved, so fallback
+                return Path.Combine(AltFolder, RootFolderName, DesktopRelativePath);
+            }
+        }
+
+        public static string AutoMapperFileAltPath
+        {
+            get
+            {
+                // some env variable was not resolved, so fallback
+                return Path.Combine(AltFolder, RootFolderName, DesktopRelativePath);
+            }
+        }      
 
         public static string DesktopTempPath
         {
             get
             {
-                return Path.Combine(Environment.ExpandEnvironmentVariables("%TEMP%"), DefaultFolderName + "/" + DesktopRelativePath);
+                return Path.Combine(Environment.ExpandEnvironmentVariables("%TEMP%"), RootFolderName + "/" + DesktopRelativePath);
             }
         }
 
@@ -120,7 +133,7 @@ namespace AppLauncher.FileHelpers
         {
             get
             {
-                return Path.Combine(Environment.ExpandEnvironmentVariables("%TEMP%"), DefaultFolderName + "/"+ AutoMapperRelativeFilePath);
+                return Path.Combine(Environment.ExpandEnvironmentVariables("%TEMP%"), RootFolderName + "/"+ AutoMapperRelativeFilePath);
             }
         }
 

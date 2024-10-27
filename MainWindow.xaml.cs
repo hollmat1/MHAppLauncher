@@ -104,7 +104,7 @@ namespace AppLauncher
                 {
                     if (AppLauncherAppConfig.IsOneDriveFolder(ParentPath.FullName) && !AppLauncherAppConfig.OneDriveExists)
                     {
-                        _networkDrivesfilePath = AppLauncherAppConfig.AutoMapperFileTempPath;
+                        _networkDrivesfilePath = AppLauncherAppConfig.AutoMapperFileAltPath;
 
                         ParentPath = Directory.GetParent(_networkDrivesfilePath);
                     }
@@ -155,10 +155,10 @@ namespace AppLauncher
             {
                 if (AppLauncherAppConfig.IsOneDriveFolder(_folderPath) && !AppLauncherAppConfig.OneDriveExists)
                 {
-                    MessageBox.Show($"OneDrive is not available.  Please ensure you are Signed-in to OneDrive.  Desktop changes will not be saved!",
-                        "Sign-in to OneDrive", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    //MessageBox.Show($"OneDrive is not available.  Please ensure you are Signed-in to OneDrive.  Desktop changes will not be saved!",
+                    //    "Sign-in to OneDrive", MessageBoxButton.OK, MessageBoxImage.Warning);
 
-                    _folderPath = AppLauncherAppConfig.DesktopTempPath;
+                    _folderPath = AppLauncherAppConfig.DesktopAltPath;
                 }
 
                 Directory.CreateDirectory(_folderPath);
