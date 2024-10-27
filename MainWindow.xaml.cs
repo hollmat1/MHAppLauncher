@@ -63,8 +63,7 @@ namespace AppLauncher
                 }
                 else
                 {
-                    _folderPath = ConfigurationManager.AppSettings["Folder"];
-                    _folderPath = Environment.ExpandEnvironmentVariables(_folderPath);
+                    _folderPath = AppLauncherAppConfig.DesktopPath;
 
                     UseFileBrowserDialogToOpenFolderShortcuts = !string.IsNullOrEmpty(ConfigurationManager.AppSettings["UseFileBrowserDialogToOpenFolderShortcuts"]) &&
                         ConfigurationManager.AppSettings["UseFileBrowserDialogToOpenFolderShortcuts"].Equals("true", StringComparison.OrdinalIgnoreCase);
@@ -95,11 +94,25 @@ namespace AppLauncher
                 return;
             }
 
-            _networkDrivesfilePath = ConfigurationManager.AppSettings["AutoMapperFilePath"];
-            _networkDrivesfilePath = Environment.ExpandEnvironmentVariables(_networkDrivesfilePath);
+            _networkDrivesfilePath = AppLauncherAppConfig.AutoMapperFilePath;
 
             try
             {
+                var ParentPath = Directory.GetParent(_networkDrivesfilePath);
+
+                if (!ParentPath.Exists)
+                {
+                    if (AppLauncherAppConfig.IsOneDriveFolder && !AppLauncherAppConfig.OneDriveExists)
+                    {
+                        MessageBox.Show($"App Launcher is using OneDrive but OneDrive does not appear to be available.  State will not be saved until you sign-in to OneDrive.", 
+                            "Please sign-in to OneDrive", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                        return;
+                    }
+
+                    ParentPath.Create();
+                }
+
                 if(!File.Exists(_networkDrivesfilePath))
                 {
                     return;
@@ -129,8 +142,9 @@ namespace AppLauncher
                     }
                 }
             }
-            catch (ApplicationException ex)
+            catch 
             {
+                // intentionally not caught
             }
 
 
@@ -140,6 +154,14 @@ namespace AppLauncher
         {
             if (!Directory.Exists(_folderPath))
             {
+                if (AppLauncherAppConfig.IsOneDriveFolder && !AppLauncherAppConfig.OneDriveExists)
+                {
+                    MessageBox.Show($"App Launcher is using OneDrive but OneDrive does not appear to be available.  State will not be saved until you sign-in to OneDrive.",
+                        "Please sign-in to OneDrive", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                    return;
+                }
+
                 Directory.CreateDirectory(_folderPath);
 
                 var optionalShortcuts = (NameValueCollection)ConfigurationManager.GetSection("OptionalShortcuts");

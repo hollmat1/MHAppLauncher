@@ -17,7 +17,7 @@ c:\users\matty\source\repos\mhapplauncher\mainwindow.xaml.cs
                 <MenuItem Header="File Browser.." Click="FileBrowser_Click" FontSize="14" Height="30" TextBlock.TextAlignment="Center" />
                 <MenuItem Header="About" Click="About_Click" FontSize="14" Height="30" />
             </Menu>
-            <TextBlock HorizontalAlignment="Left" Margin="10,15,20,10" TextWrapping="Wrap" Text="Drag applications or shortcuts into the space below.  Double-Click to launch." FontSize="14" VerticalAlignment="Top"/>
+            <TextBlock HorizontalAlignment="Left" Margin="10,0,20,10" TextWrapping="Wrap" Text="Drag applications or shortcuts into the space below.  Double-Click to launch." FontSize="14" VerticalAlignment="Top"/>
         </StackPanel>
         <ListBox Name="ListBoxFiles" VerticalContentAlignment="Top" ItemsSource="{Binding FilesCollection}" Margin="10,60,0,0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AllowDrop="True" KeyDown="Image_KeyDown">
             <ListBox.ItemTemplate>

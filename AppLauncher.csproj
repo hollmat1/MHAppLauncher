@@ -117,6 +117,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="FileHelpers\AppLauncherAppConfig.cs" />
     <Compile Include="FileHelpers\BaseObject.cs" />
     <Compile Include="FileHelpers\Enums\FileAttribute.cs" />
     <Compile Include="FileHelpers\Enums\IconSize.cs" />
